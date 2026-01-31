@@ -3,7 +3,6 @@ package services
 import (
 	"errors"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/AKSHAY-1505/auth-service/initializers"
@@ -14,8 +13,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
-
-var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 func CreateUser(c *gin.Context, email string, password string, role models.Role) *util.APIError {
 	logger := util.GetLoggerFromContext(c)
@@ -60,7 +57,7 @@ func GetUserByEmail(c *gin.Context, email string) (*models.User, *util.APIError)
 	// Retrieve user based on email
 	var user models.User
 	result := initializers.DB.Where("email = ?", email).First(&user)
-	
+
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			// user not found
@@ -91,6 +88,8 @@ func GenerateJWTForUser(user *models.User) (string, *util.APIError) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	jwtSecret := []byte(initializers.AppConfig.JWTSecret)
+
 	signedToken, err := token.SignedString(jwtSecret)
 
 	if err != nil {
