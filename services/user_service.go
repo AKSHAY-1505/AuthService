@@ -1,14 +1,21 @@
 package services
 
 import (
+	"errors"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/AKSHAY-1505/auth-service/initializers"
 	"github.com/AKSHAY-1505/auth-service/models"
 	"github.com/AKSHAY-1505/auth-service/util"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
+
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 func CreateUser(c *gin.Context, email string, password string, role models.Role) *util.APIError {
 	logger := util.GetLoggerFromContext(c)
@@ -42,4 +49,53 @@ func CreateUser(c *gin.Context, email string, password string, role models.Role)
 
 	logger.Info("User registration successful.")
 	return nil
+}
+
+func GetUserByEmail(c *gin.Context, email string) (*models.User, *util.APIError) {
+	// Validate Email
+	if !util.IsValidEmail(email) {
+		return nil, util.NewAPIError(http.StatusBadRequest, "Invalid Email.")
+	}
+
+	// Retrieve user based on email
+	var user models.User
+	result := initializers.DB.Where("email = ?", email).First(&user)
+	
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			// user not found
+			return nil, util.NewAPIError(http.StatusBadRequest, "User is not registered.")
+		}
+
+		return nil, util.NewAPIError(http.StatusInternalServerError, "Unable to find user.")
+	}
+
+	return &user, nil
+}
+
+// ComparePassword returns true if password matches the hashed password
+func CompareUserPassword(User *models.User, password string) bool {
+	passwordHash := User.Password
+	err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password))
+	return err == nil
+}
+
+// GenerateJWT generates a JWT token for a user
+func GenerateJWTForUser(user *models.User) (string, *util.APIError) {
+	claims := jwt.MapClaims{
+		"user_id": user.ID,
+		"email":   user.Email,
+		"role":    user.Role,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(), // token expires in 24h
+		"iat":     time.Now().Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString(jwtSecret)
+
+	if err != nil {
+		return "", util.NewAPIError(http.StatusInternalServerError, err.Error())
+	}
+
+	return signedToken, nil
 }
