@@ -2,7 +2,6 @@ package initializers
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/AKSHAY-1505/auth-service/models"
@@ -13,11 +12,11 @@ import (
 var DB *gorm.DB
 
 func InitDB() {
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	username := os.Getenv("DB_USERNAME")
-	password := os.Getenv("DB_PASSWORD")
-	database := os.Getenv("DB_DATABASE")
+	host := AppConfig.DBHost
+	port := AppConfig.DBPort
+	username := AppConfig.DBUsername
+	password := AppConfig.DBPassword
+	database := AppConfig.DBDatabase
 	connectionString := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", host, username, password, database, port)
 
 	Log.Infof("[SERVER] Initializing connection to PostgresDB Host: %s", host)
