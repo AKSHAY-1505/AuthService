@@ -2,21 +2,20 @@ package auth
 
 import (
 	"crypto/rsa"
-	"crypto/x509"
 	"encoding/base64"
-	"encoding/pem"
-	"errors"
 	"log"
 
 	"github.com/AKSHAY-1505/auth-service/initializers"
+	"github.com/lestrrat-go/jwx/v2/jwk"
 )
 
 var (
-	privateKey *rsa.PrivateKey
-	publicKey  *rsa.PublicKey
+	privateKey jwk.Key
+	publicKey  jwk.Key
+	jwks       jwk.Set
 )
 
-func InitJWTKeys() {
+func InitJWTSecretKeys() {
 	var err error
 
 	privateKeyBase64 := initializers.AppConfig.JWTPrivateKey
@@ -29,69 +28,68 @@ func InitJWTKeys() {
 		panic("public key not configured in environment variables")
 	}
 
-	privateKey, err = parseRSAPrivateKeyFromEnv(privateKeyBase64)
+	privateKey, err = loadJWKFromBase64(privateKeyBase64)
 	if err != nil {
 		log.Fatalf("failed to parse JWT private key: %v", err)
 	}
 
-	publicKey, err = parseRSAPublicKeyFromEnv(publicKeyBase64)
+	publicKey, err = loadJWKFromBase64(publicKeyBase64)
 	if err != nil {
 		log.Fatalf("failed to parse JWT public key: %v", err)
+	}
+
+	jwks, err = buildJWKS(publicKey)
+	if err != nil {
+		log.Fatalf("failed to create jwks: %v", err)
 	}
 }
 
 func GetPrivateKey() *rsa.PrivateKey {
-	return privateKey
+	var key rsa.PrivateKey
+	_ = privateKey.Raw(&key)
+	return &key
 }
 
 func GetPublicKey() *rsa.PublicKey {
-	return publicKey
+	var key rsa.PublicKey
+	_ = privateKey.Raw(&key)
+	return &key
 }
 
-func parseRSAPrivateKeyFromEnv(b64 string) (*rsa.PrivateKey, error) {
-	keyBytes, err := base64.StdEncoding.DecodeString(b64)
-	if err != nil {
-		return nil, err
-	}
-
-	block, _ := pem.Decode(keyBytes)
-	if block == nil {
-		return nil, errors.New("invalid PEM block")
-	}
-
-	parsedKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	rsaKey, ok := parsedKey.(*rsa.PrivateKey)
-	if !ok {
-		return nil, errors.New("key is not RSA")
-	}
-
-	return rsaKey, nil
+func GetJWKS() jwk.Set {
+	return jwks
 }
 
-func parseRSAPublicKeyFromEnv(publicKeyB64 string) (*rsa.PublicKey, error) {
-	keyBytes, err := base64.StdEncoding.DecodeString(publicKeyB64)
+func loadJWKFromBase64(b64 string) (jwk.Key, error) {
+	decoded, err := base64.StdEncoding.DecodeString(b64)
 	if err != nil {
 		return nil, err
 	}
 
-	block, _ := pem.Decode(keyBytes)
-	if block == nil {
-		return nil, errors.New("invalid public key PEM")
-	}
-
-	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+	key, err := jwk.ParseKey(decoded, jwk.WithPEM(true))
 	if err != nil {
 		return nil, err
 	}
 
-	rsaPub, ok := pub.(*rsa.PublicKey)
-	if !ok {
-		return nil, errors.New("not RSA public key")
+	return key, nil
+}
+
+// BuildJWKS returns a jwk.Set containing the public key
+func buildJWKS(publicKey jwk.Key) (jwk.Set, error) {
+	// Ensure required fields are set
+	// You SHOULD already be setting kid during key generation
+	if _, ok := publicKey.Get(jwk.KeyIDKey); !ok {
+		_ = publicKey.Set(jwk.KeyIDKey, "default-kid")
 	}
 
-	return rsaPub, nil
+	// Set recommended metadata
+	_ = publicKey.Set(jwk.AlgorithmKey, "RS256")
+	_ = publicKey.Set(jwk.KeyUsageKey, "sig")
+
+	set := jwk.NewSet()
+	if err := set.AddKey(publicKey); err != nil {
+		return nil, err
+	}
+
+	return set, nil
 }

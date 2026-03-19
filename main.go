@@ -11,7 +11,7 @@ import (
 func init() {
 	initializers.InitLogger()
 	initializers.InitEnvVariables()
-	auth.InitJWTKeys()
+	auth.InitJWTSecretKeys()
 	initializers.InitDB()
 }
 
@@ -26,6 +26,8 @@ func main() {
 		authEndpoints.POST("/login", controllers.Login)
 		authEndpoints.POST("/register-admin", controllers.RegisterAdmin)
 	}
+
+	r.GET("/.well-known/jwks.json", controllers.JWKSHandler)
 
 	r.Run()
 }
