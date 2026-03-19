@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
+	"github.com/AKSHAY-1505/auth-service/auth"
 	"github.com/AKSHAY-1505/auth-service/initializers"
 	"github.com/AKSHAY-1505/auth-service/models"
 	"github.com/AKSHAY-1505/auth-service/util"
@@ -93,11 +93,9 @@ func GenerateJWTForUser(user *models.User) (string, *util.APIError) {
 		"iat":     time.Now().Unix(),
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	jwtSecret := []byte(initializers.AppConfig.JWTSecret)
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 
-	signedToken, err := token.SignedString(jwtSecret)
-
+	signedToken, err := token.SignedString(auth.GetPrivateKey())
 	if err != nil {
 		return "", util.NewAPIError(http.StatusInternalServerError, err.Error())
 	}
@@ -106,14 +104,12 @@ func GenerateJWTForUser(user *models.User) (string, *util.APIError) {
 }
 
 func ParseJWTToken(tokenString string) (map[string]any, error) {
-	secret := []byte(os.Getenv("JWT_SECRET"))
-
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		// Enforce expected signing method
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return secret, nil
+		return auth.GetPublicKey(), nil
 	})
 
 	if err != nil {

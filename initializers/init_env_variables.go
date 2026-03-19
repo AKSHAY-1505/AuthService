@@ -10,12 +10,13 @@ import (
 var AppConfig *Config
 
 type Config struct {
-	DBHost     string
-	DBPort     string
-	DBUsername string
-	DBPassword string
-	DBDatabase string
-	JWTSecret  string
+	DBHost        string
+	DBPort        string
+	DBUsername    string
+	DBPassword    string
+	DBDatabase    string
+	JWTPrivateKey string
+	JWTPublicKey  string
 }
 
 func InitEnvVariables() {
@@ -25,11 +26,12 @@ func InitEnvVariables() {
 	}
 
 	AppConfig = &Config{
-		DBHost:     os.Getenv("DB_HOST"),
-		DBPort:     os.Getenv("DB_PORT"),
-		DBUsername: os.Getenv("DB_USERNAME"),
-		DBPassword: os.Getenv("DB_PASSWORD"),
-		DBDatabase: os.Getenv("DB_DATABASE"),
-		JWTSecret:  os.Getenv("JWT_SECRET"),
+		DBHost:        os.Getenv("DB_HOST"),
+		DBPort:        os.Getenv("DB_PORT"),
+		DBUsername:    os.Getenv("DB_USERNAME"),
+		DBPassword:    os.Getenv("DB_PASSWORD"),
+		DBDatabase:    os.Getenv("DB_DATABASE"),
+		JWTPrivateKey: os.Getenv("JWT_PRIVATE_KEY"),
+		JWTPublicKey:  os.Getenv("JWT_PUBLIC_KEY"),
 	}
 }

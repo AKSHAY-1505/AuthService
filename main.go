@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/AKSHAY-1505/auth-service/auth"
 	"github.com/AKSHAY-1505/auth-service/controllers"
 	"github.com/AKSHAY-1505/auth-service/initializers"
 	"github.com/AKSHAY-1505/auth-service/middlewares"
@@ -10,6 +11,7 @@ import (
 func init() {
 	initializers.InitLogger()
 	initializers.InitEnvVariables()
+	auth.InitJWTKeys()
 	initializers.InitDB()
 }
 
