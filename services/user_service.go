@@ -2,7 +2,9 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/AKSHAY-1505/auth-service/initializers"
@@ -97,4 +99,34 @@ func GenerateJWTForUser(user *models.User) (string, *util.APIError) {
 	}
 
 	return signedToken, nil
+}
+
+func ParseJWTToken(tokenString string) (map[string]any, error) {
+	secret := []byte(os.Getenv("JWT_SECRET"))
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+		// Enforce expected signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return secret, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate token and extract claims
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		// Optional: manually verify exp if you want stricter control
+		if exp, ok := claims["exp"].(float64); ok {
+			if time.Now().Unix() > int64(exp) {
+				return nil, fmt.Errorf("token expired")
+			}
+		}
+
+		return claims, nil
+	}
+
+	return nil, fmt.Errorf("invalid token")
 }

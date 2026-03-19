@@ -22,6 +22,7 @@ func main() {
 	{
 		authEndpoints.POST("/register", controllers.Register)
 		authEndpoints.POST("/login", controllers.Login)
+		authEndpoints.POST("/register-admin", controllers.RegisterAdmin)
 	}
 
 	r.Run()
