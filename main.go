@@ -25,7 +25,7 @@ func main() {
 		authEndpoints.POST("/register", controllers.Register)
 		authEndpoints.POST("/login", controllers.Login)
 
-		adminEndpoints := r.Group("/admins", middlewares.AdminAuthMiddleware)
+		adminEndpoints := authEndpoints.Group("/admins", middlewares.AdminAuthMiddleware)
 		{
 			adminEndpoints.POST("", controllers.RegisterAdmin)
 		}

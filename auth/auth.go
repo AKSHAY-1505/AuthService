@@ -55,7 +55,7 @@ func GetPrivateKey() *rsa.PrivateKey {
 
 func GetPublicKey() *rsa.PublicKey {
 	var key rsa.PublicKey
-	_ = privateKey.Raw(&key)
+	_ = publicKey.Raw(&key)
 	return &key
 }
 

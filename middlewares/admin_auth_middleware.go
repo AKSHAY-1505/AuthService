@@ -11,12 +11,12 @@ import (
 func AdminAuthMiddleware(c *gin.Context) {
 	accessToken, err := auth.ExtractAuthHeader(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
 	if !services.IsAdmin(accessToken) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "you are not authorised to perform this action"})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "you are not authorised to perform this action"})
 		return
 	}
 
