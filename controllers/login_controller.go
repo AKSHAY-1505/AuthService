@@ -24,6 +24,7 @@ func Login(c *gin.Context) {
 		c.JSON(err.StatusCode, gin.H{
 			"error": err.Message,
 		})
+		return
 	}
 
 	// Respond

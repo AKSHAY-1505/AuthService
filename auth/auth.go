@@ -83,10 +83,7 @@ func loadJWKFromBase64(b64 string) (jwk.Key, error) {
 // BuildJWKS returns a jwk.Set containing the public key
 func buildJWKS(publicKey jwk.Key) (jwk.Set, error) {
 	// Ensure required fields are set
-	// You SHOULD already be setting kid during key generation
-	if _, ok := publicKey.Get(jwk.KeyIDKey); !ok {
-		_ = publicKey.Set(jwk.KeyIDKey, "default-kid")
-	}
+	_ = publicKey.Set(jwk.KeyIDKey, "auth_service")
 
 	// Set recommended metadata
 	_ = publicKey.Set(jwk.AlgorithmKey, "RS256")
