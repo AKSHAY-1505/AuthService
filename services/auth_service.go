@@ -3,6 +3,7 @@ package services
 import (
 	"net/http"
 
+	"github.com/AKSHAY-1505/auth-service/auth"
 	"github.com/AKSHAY-1505/auth-service/models"
 	"github.com/AKSHAY-1505/auth-service/util"
 	"github.com/gin-gonic/gin"
@@ -31,7 +32,7 @@ func Login(c *gin.Context, loginRequest *models.AuthRequest) (string, *util.APIE
 }
 
 func IsAdmin(accessToken string) bool {
-	claims, err := ParseJWTToken(accessToken)
+	claims, err := auth.ParseClaims(accessToken)
 	if err != nil {
 		return false
 	}

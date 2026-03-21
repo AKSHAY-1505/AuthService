@@ -4,11 +4,14 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/AKSHAY-1505/auth-service/initializers"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 )
 
@@ -106,4 +109,43 @@ func ExtractAuthHeader(c *gin.Context) (string, error) {
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
 	return tokenString, nil
+}
+
+func CreateJWT(claims jwt.MapClaims) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+
+	signedToken, err := token.SignedString(GetPrivateKey())
+	if err != nil {
+		return "", err
+	}
+
+	return signedToken, nil
+}
+
+func ParseClaims(tokenString string) (map[string]any, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+		// Enforce expected signing method
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return GetPublicKey(), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate token and extract claims
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		// Optional: manually verify exp if you want stricter control
+		if exp, ok := claims["exp"].(float64); ok {
+			if time.Now().Unix() > int64(exp) {
+				return nil, fmt.Errorf("token expired")
+			}
+		}
+
+		return claims, nil
+	}
+
+	return nil, fmt.Errorf("invalid token")
 }

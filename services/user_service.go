@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -83,40 +82,10 @@ func GenerateJWTForUser(user *models.User) (string, *util.APIError) {
 		"iat":     time.Now().Unix(),
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-
-	signedToken, err := token.SignedString(auth.GetPrivateKey())
+	token, err := auth.CreateJWT(claims)
 	if err != nil {
-		return "", util.NewAPIError(http.StatusInternalServerError, err.Error())
+		return "", util.NewAPIError(http.StatusInternalServerError, "unable to create access token for user")
 	}
 
-	return signedToken, nil
-}
-
-func ParseJWTToken(tokenString string) (map[string]any, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
-		// Enforce expected signing method
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return auth.GetPublicKey(), nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Validate token and extract claims
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		// Optional: manually verify exp if you want stricter control
-		if exp, ok := claims["exp"].(float64); ok {
-			if time.Now().Unix() > int64(exp) {
-				return nil, fmt.Errorf("token expired")
-			}
-		}
-
-		return claims, nil
-	}
-
-	return nil, fmt.Errorf("invalid token")
+	return token, nil
 }
