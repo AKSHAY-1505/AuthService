@@ -1,4 +1,4 @@
-package controllers
+package handlers
 
 import (
 	"net/http"
@@ -8,11 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Register(c *gin.Context) {
-	var registerRequest struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
+func RegisterAdmin(c *gin.Context) {
+	var registerRequest models.AuthRequest
 
 	err := c.ShouldBindBodyWithJSON(&registerRequest)
 	if err != nil {
@@ -23,7 +20,7 @@ func Register(c *gin.Context) {
 	}
 
 	// Create the user
-	createError := services.CreateUser(c, registerRequest.Email, registerRequest.Password, models.RoleUser)
+	createError := services.CreateUser(c, registerRequest.Email, registerRequest.Password, models.RoleAdmin)
 	if createError != nil {
 		c.JSON(createError.StatusCode, gin.H{
 			"error": createError.Message,
@@ -32,5 +29,5 @@ func Register(c *gin.Context) {
 	}
 
 	// Send response
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusCreated, gin.H{})
 }
