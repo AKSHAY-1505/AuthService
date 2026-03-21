@@ -3,9 +3,12 @@ package auth
 import (
 	"crypto/rsa"
 	"encoding/base64"
+	"errors"
 	"log"
+	"strings"
 
 	"github.com/AKSHAY-1505/auth-service/initializers"
+	"github.com/gin-gonic/gin"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 )
 
@@ -92,4 +95,15 @@ func buildJWKS(publicKey jwk.Key) (jwk.Set, error) {
 	}
 
 	return set, nil
+}
+
+func ExtractAuthHeader(c *gin.Context) (string, error) {
+	authHeader := c.Request.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		return "", errors.New("authorization header is missing")
+	}
+
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+	return tokenString, nil
 }

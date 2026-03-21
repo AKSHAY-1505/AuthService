@@ -29,3 +29,17 @@ func Login(c *gin.Context, loginRequest *models.AuthRequest) (string, *util.APIE
 
 	return jwt, nil
 }
+
+func IsAdmin(accessToken string) bool {
+	claims, err := ParseJWTToken(accessToken)
+	if err != nil {
+		return false
+	}
+
+	roleClaim, ok := claims["role"].(string)
+	if !ok {
+		return false
+	}
+
+	return models.Role(roleClaim) == models.RoleAdmin
+}

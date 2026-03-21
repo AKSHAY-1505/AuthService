@@ -24,7 +24,11 @@ func main() {
 	{
 		authEndpoints.POST("/register", controllers.Register)
 		authEndpoints.POST("/login", controllers.Login)
-		authEndpoints.POST("/register-admin", controllers.RegisterAdmin)
+
+		adminEndpoints := r.Group("/admins", middlewares.AdminAuthMiddleware)
+		{
+			adminEndpoints.POST("", controllers.RegisterAdmin)
+		}
 	}
 
 	r.GET("/.well-known/jwks.json", controllers.JWKSHandler)
