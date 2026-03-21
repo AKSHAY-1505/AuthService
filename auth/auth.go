@@ -83,6 +83,7 @@ func loadJWKFromBase64(b64 string) (jwk.Key, error) {
 // BuildJWKS returns a jwk.Set containing the public key
 func buildJWKS(publicKey jwk.Key) (jwk.Set, error) {
 	// Ensure required fields are set
+	// Set the KID of the JWK (must match the kid of the jwt tokens issued)
 	_ = publicKey.Set(jwk.KeyIDKey, "auth_service")
 
 	// Set recommended metadata

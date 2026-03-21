@@ -1,4 +1,4 @@
-package controllers
+package handlers
 
 import (
 	"net/http"
@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterAdmin(c *gin.Context) {
+func Register(c *gin.Context) {
 	var registerRequest models.AuthRequest
 
 	err := c.ShouldBindBodyWithJSON(&registerRequest)
@@ -20,7 +20,7 @@ func RegisterAdmin(c *gin.Context) {
 	}
 
 	// Create the user
-	createError := services.CreateUser(c, registerRequest.Email, registerRequest.Password, models.RoleAdmin)
+	createError := services.CreateUser(c, registerRequest.Email, registerRequest.Password, models.RoleUser)
 	if createError != nil {
 		c.JSON(createError.StatusCode, gin.H{
 			"error": createError.Message,

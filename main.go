@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/AKSHAY-1505/auth-service/auth"
-	"github.com/AKSHAY-1505/auth-service/controllers"
+	"github.com/AKSHAY-1505/auth-service/handlers"
 	"github.com/AKSHAY-1505/auth-service/initializers"
 	"github.com/AKSHAY-1505/auth-service/middlewares"
 	"github.com/gin-gonic/gin"
@@ -22,16 +22,16 @@ func main() {
 	// auth endpoints
 	authEndpoints := r.Group("/auth", middlewares.RequestLoggerMiddleware)
 	{
-		authEndpoints.POST("/register", controllers.Register)
-		authEndpoints.POST("/login", controllers.Login)
+		authEndpoints.POST("/register", handlers.Register)
+		authEndpoints.POST("/login", handlers.Login)
 
 		adminEndpoints := authEndpoints.Group("/admins", middlewares.AdminAuthMiddleware)
 		{
-			adminEndpoints.POST("", controllers.RegisterAdmin)
+			adminEndpoints.POST("", handlers.RegisterAdmin)
 		}
 	}
 
-	r.GET("/.well-known/jwks.json", controllers.JWKSHandler)
+	r.GET("/.well-known/jwks.json", handlers.JWKSHandler)
 
 	r.Run()
 }
