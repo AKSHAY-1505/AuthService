@@ -28,3 +28,19 @@ func FindUserByEmail(email string) (*models.User, error) {
 
 	return &user, nil
 }
+
+func UserExistsByEmail(email string) bool {
+	var exists bool
+
+	err := initializers.DB.
+		Model(&models.User{}).
+		Select("count(*) > 0").
+		Where("email = ?", email).
+		Find(&exists).Error
+
+	if err != nil {
+		return false
+	}
+
+	return exists
+}

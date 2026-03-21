@@ -9,10 +9,7 @@ import (
 )
 
 func Register(c *gin.Context) {
-	var registerRequest struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
+	var registerRequest models.AuthRequest
 
 	err := c.ShouldBindBodyWithJSON(&registerRequest)
 	if err != nil {
@@ -32,5 +29,5 @@ func Register(c *gin.Context) {
 	}
 
 	// Send response
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusCreated, gin.H{})
 }

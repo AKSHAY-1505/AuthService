@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/AKSHAY-1505/auth-service/auth"
-	"github.com/AKSHAY-1505/auth-service/initializers"
 	"github.com/AKSHAY-1505/auth-service/models"
 	"github.com/AKSHAY-1505/auth-service/storage"
 	"github.com/AKSHAY-1505/auth-service/util"
@@ -27,7 +26,7 @@ func CreateUser(c *gin.Context, email string, password string, role models.Role)
 		return util.NewAPIError(http.StatusBadRequest, "Password cannot be empty.")
 	}
 
-	if userAlreadyExists(email) {
+	if storage.UserExistsByEmail(email) {
 		return util.NewAPIError(http.StatusBadRequest, "User with this email already exists")
 	}
 
@@ -67,14 +66,14 @@ func GetUserByEmail(c *gin.Context, email string) (*models.User, *util.APIError)
 	return user, nil
 }
 
-// ComparePassword returns true if password matches the hashed password
+// CompareUserPassword returns true if password matches the hashed password
 func CompareUserPassword(User *models.User, password string) bool {
 	passwordHash := User.Password
 	err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password))
 	return err == nil
 }
 
-// GenerateJWT generates a JWT token for a user
+// GenerateJWTForUser generates a JWT token for a user
 func GenerateJWTForUser(user *models.User) (string, *util.APIError) {
 	claims := jwt.MapClaims{
 		"user_id": user.ID,
@@ -120,20 +119,4 @@ func ParseJWTToken(tokenString string) (map[string]any, error) {
 	}
 
 	return nil, fmt.Errorf("invalid token")
-}
-
-func userAlreadyExists(email string) bool {
-	var exists bool
-
-	err := initializers.DB.
-		Model(&models.User{}).
-		Select("count(*) > 0").
-		Where("email = ?", email).
-		Find(&exists).Error
-
-	if err != nil {
-		return false
-	}
-
-	return exists
 }
