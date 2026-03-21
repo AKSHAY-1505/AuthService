@@ -108,8 +108,13 @@ func ExtractAuthHeader(c *gin.Context) (string, error) {
 	return tokenString, nil
 }
 
-func CreateJWT(claims jwt.MapClaims) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+func CreateJWT(claims map[string]any) (string, error) {
+	claims["exp"] = time.Now().Add(24 * time.Hour).Unix() // token expires in 24h
+	claims["iat"] = time.Now().Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims(claims))
+
+	// Key ID (kid) header of jwt helps identify the public key (jwk format) from the jwks (multiple jwk) received from the jwks endpoint
+	token.Header["kid"] = "auth_service"
 
 	signedToken, err := token.SignedString(GetPrivateKey())
 	if err != nil {

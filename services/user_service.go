@@ -2,14 +2,12 @@ package services
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/AKSHAY-1505/auth-service/auth"
 	"github.com/AKSHAY-1505/auth-service/models"
 	"github.com/AKSHAY-1505/auth-service/storage"
 	"github.com/AKSHAY-1505/auth-service/util"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -74,12 +72,10 @@ func CompareUserPassword(User *models.User, password string) bool {
 
 // GenerateJWTForUser generates a JWT token for a user
 func GenerateJWTForUser(user *models.User) (string, *util.APIError) {
-	claims := jwt.MapClaims{
+	claims := map[string]any{
 		"user_id": user.ID,
 		"email":   user.Email,
 		"role":    user.Role,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(), // token expires in 24h
-		"iat":     time.Now().Unix(),
 	}
 
 	token, err := auth.CreateJWT(claims)
