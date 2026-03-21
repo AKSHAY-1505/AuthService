@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,11 +8,11 @@ import (
 	"github.com/AKSHAY-1505/auth-service/auth"
 	"github.com/AKSHAY-1505/auth-service/initializers"
 	"github.com/AKSHAY-1505/auth-service/models"
+	"github.com/AKSHAY-1505/auth-service/storage"
 	"github.com/AKSHAY-1505/auth-service/util"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 func CreateUser(c *gin.Context, email string, password string, role models.Role) *util.APIError {
@@ -45,8 +44,7 @@ func CreateUser(c *gin.Context, email string, password string, role models.Role)
 		Role:     role,
 	}
 
-	result := initializers.DB.Create(&user)
-	if result.Error != nil {
+	if err := storage.CreateUser(&user); err != nil {
 		return util.NewAPIError(http.StatusInternalServerError, "Failed to create user.")
 	}
 
@@ -61,19 +59,12 @@ func GetUserByEmail(c *gin.Context, email string) (*models.User, *util.APIError)
 	}
 
 	// Retrieve user based on email
-	var user models.User
-	result := initializers.DB.Where("email = ?", email).First(&user)
-
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			// user not found
-			return nil, util.NewAPIError(http.StatusBadRequest, "User is not registered.")
-		}
-
-		return nil, util.NewAPIError(http.StatusInternalServerError, "Unable to find user.")
+	user, err := storage.FindUserByEmail(email)
+	if err != nil {
+		return nil, util.NewAPIError(http.StatusBadRequest, err.Error())
 	}
 
-	return &user, nil
+	return user, nil
 }
 
 // ComparePassword returns true if password matches the hashed password
